@@ -57,6 +57,38 @@ app.post('/register', async (req, res)=> {
 
   
 });
+app.post('/login', async (req, res)=> {
+  
+  try{
+
+    const checkEmail = await prepare("SELECT * FROM userinfo WHERE email=?", [
+      req.body.email,
+    ]);
+
+    if(!checkEmail.length){
+      throw new Error (" User Not Found")
+    }
+    
+    const dbPassword = checkEmail[0].password;
+
+    // compare password against
+
+    const match = await bcrypt.compare(req.body.pass, dbPassword);
+    
+    if(!match){
+      throw new Error ("Invalid Password");
+    }
+    
+    
+
+  res.status(200).json({ status: true, message: "Login Success"});
+  }catch(error){
+  res.status(200).json({ status: false, message: error?.message});
+  }
+
+
+  
+});
 // app.post('/login', (req, res)=> {
 //   console.log(req.body); // ekhane req.body er mordhe fontend er all data asbe sei data niya amara ja ischa korte perbo
   
