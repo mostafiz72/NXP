@@ -1,8 +1,8 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');  /// font end er sate conntion korar jonno cors pakej install korte hoy
-const email = "freelancer@gmail.com";
-const password = "1234";
+const bcrypt = require('bcrypt');
+
 
 app.listen(8080, () => {
     console.log('Server is running on port 8080');
@@ -23,6 +23,39 @@ app.use(express.urlencoded({ extended: true}));  // font end theke amar ki data 
 app.get('/', (req, res)=> {
     res.set('Content-Type', 'application/json');
     res.status(200).send(JSON.stringify({ name: "Mostafiz", message: "Login successfull"}));
+});
+app.post('/register', async (req, res)=> {
+  
+  try{
+
+    const checkEmail = await prepare("SELECT * FROM userinfo WHERE email=?", [
+      req.body.email,
+    ]);
+
+    if(checkEmail?.length){
+      throw new Error (" This email is already registered.")
+    }
+
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);  // password encrypt kora hoye jonno bcrypt pakej install korte hobe
+
+    const insertIntoDb = await prepare("INSERT INTO userinfo (fullName, email, password) VALUES (?,?,?)", [
+      req.body.fullName,
+      req.body.email,
+      hashedPassword,
+    ]);
+
+    if(!insertIntoDb?.insertId){
+      throw new Error ("Failed to register.");
+    }
+
+
+  res.status(200).json({ status: true, message: "Register Success"});
+  }catch(error){
+  res.status(200).json({ status: false, message: error?.message});
+  }
+
+
+  
 });
 // app.post('/login', (req, res)=> {
 //   console.log(req.body); // ekhane req.body er mordhe fontend er all data asbe sei data niya amara ja ischa korte perbo
@@ -103,12 +136,10 @@ async function prepare(query, arr){  // query holo database language leskhear ja
   }
 }
 
+// sql languages are here>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// "insert into userinfo (fullName, email, password)VALUES(?,?,?)", ["Mostafiz", "mostafiz4372@gamil.com", "1234"] === amara atar mardhome data pathai database a
 
-prepare("INSERT INTO userinfo (fullName,email,password)VALUES(?,?,?)", [
-  "Mostafiz Shah",
-  "mostafiz@gmail.com",
-  "1234",
-]) /// prepare use korle past kaj korbe and data check kore database a pathabe
+prepare(`SELECT * FROM userinfo`) /// prepare use korle past kaj korbe and data check kore database a pathabe
 .then((data)=>{
   console.log(data);
   
@@ -116,3 +147,16 @@ prepare("INSERT INTO userinfo (fullName,email,password)VALUES(?,?,?)", [
   console.log(err);
   
 })
+
+
+// bcrypt customize you password // je ta password thakbe seitar sata ektra kicu value add hoye jabe jno keu bujte na pare
+// bcrypting password start here >>>>>>>>>>> bcrypt ==== password k unkown a convart kora and >>>>>>>>>>>>>>>>>>> dcrypt ==== unkown kora password k abar ager password a feriye niye asha
+
+
+
+// bcrypt.hash("1234mostafiz", 8)  /// ekhane example dekha hoyse kmne kaj kore
+//   .then((data)=>{
+//      console.log(data); // hashed password
+//   }).catch((err)=>{
+//      console.log(err);
+//   })
