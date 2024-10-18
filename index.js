@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');  /// font end er sate conntion korar jonno cors pakej install korte hoy
 const bcrypt = require('bcrypt');
-
+const jwt = require('jsonwebtoken');
 
 app.listen(8080, () => {
     console.log('Server is running on port 8080');
@@ -79,14 +79,45 @@ app.post('/login', async (req, res)=> {
       throw new Error ("Invalid Password");
     }
     
-    
 
-  res.status(200).json({ status: true, message: "Login Success"});
+    /// autohorazations pakez start here now ***************************
+    /// autohorazations pakez start here now ***************************
+    
+const token = jwt.sign(
+  {
+  data: {
+    id: checkEmail[0].id,
+    email: checkEmail[0].email,
+    fullName: checkEmail[0].fullName,
+  },
+},
+"abcd1234",
+{ expiresIn: '1h' })
+
+  res.status(200).json({ status: true, message: "Login Success", token});
   }catch(error){
   res.status(200).json({ status: false, message: error?.message});
   }
+  
+});
 
+/// Authenticate start here now >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+/// Authenticate start here now >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+app.post('/authorize', async (req, res)=> {
+  
+  try{
+   const v = jwt.verify(req.body.token, "abcd1234");
+   console.log(v.data);
 
+   const checkUser = await prepare("SELECT * FROM userinfo WHERE email=?", [v.data.email]);
+  
+   if(!checkUser.length){
+     throw new Error ("Unauthorized user")
+   }
+    res.status(200).json({ status: true, message: "User authorized"});
+  }catch(error){
+  res.status(200).json({ status: false, message: error?.message});
+  }
   
 });
 // app.post('/login', (req, res)=> {
@@ -192,3 +223,4 @@ prepare(`SELECT * FROM userinfo`) /// prepare use korle past kaj korbe and data 
 //   }).catch((err)=>{
 //      console.log(err);
 //   })
+
